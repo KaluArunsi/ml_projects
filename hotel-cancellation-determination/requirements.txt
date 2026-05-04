@@ -1,0 +1,18 @@
+# Python 3.9+
+
+# Data
+numpy==2.0.2
+pandas==2.3.3
+scipy==1.13.1
+
+# Machine learning
+scikit-learn==1.6.1
+xgboost==2.1.4
+
+# Visualisation
+matplotlib==3.9.4
+seaborn==0.13.2
+
+# Notebook
+jupyterlab==4.5.0
+ipykernel==6.31.0
