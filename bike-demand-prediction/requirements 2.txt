@@ -1,8 +1,0 @@
-pandas
-numpy
-scikit-learn
-seaborn
-matplotlib
-tensorflow-macos==2.13.0
-tensorflow-metal==1.0.1
-keras==2.13.1
