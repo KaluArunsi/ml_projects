@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from io import BytesIO
 from pathlib import Path
-from typing import BinaryIO, Iterable
+from typing import Iterable
 
 import pandas as pd
 
@@ -16,39 +16,41 @@ def _source_name(source, filename: str | None = None) -> str:
     return getattr(source, "name", "")
 
 
-def _to_binary_buffer(source) -> BytesIO:
+def _rewind(source):
+    if hasattr(source, "seek"):
+        source.seek(0)
+    return source
+
+
+def _to_excel_source(source):
+    if isinstance(source, (str, Path)):
+        return source
     if isinstance(source, BytesIO):
         source.seek(0)
         return source
-    if hasattr(source, "getvalue"):
-        return BytesIO(source.getvalue())
     if hasattr(source, "read"):
-        payload = source.read()
-        if hasattr(source, "seek"):
-            source.seek(0)
-        return BytesIO(payload)
+        return _rewind(source)
     return BytesIO(Path(source).read_bytes())
 
 
 def load_csv(file) -> pd.DataFrame:
+    _rewind(file)
     return pd.read_csv(file)
 
 
 def load_excel(file, sheet_name: str | int = 0) -> pd.DataFrame:
-    return pd.read_excel(file, sheet_name=sheet_name)
+    return pd.read_excel(_to_excel_source(file), sheet_name=sheet_name)
 
 
 def list_excel_sheets(file) -> Iterable[str]:
-    workbook = pd.ExcelFile(_to_binary_buffer(file))
+    workbook = pd.ExcelFile(_to_excel_source(file))
     return workbook.sheet_names
 
 
 def load_tabular_file(file, sheet_name: str | int = 0, filename: str | None = None) -> pd.DataFrame:
     suffix = Path(_source_name(file, filename)).suffix.lower()
     if suffix == ".csv":
-        if isinstance(file, (str, Path)):
-            return load_csv(file)
-        return load_csv(_to_binary_buffer(file))
+        return load_csv(file)
     if suffix in {".xlsx", ".xls"}:
-        return load_excel(_to_binary_buffer(file), sheet_name=sheet_name)
+        return load_excel(file, sheet_name=sheet_name)
     raise ValueError("Unsupported file type: {}".format(suffix or "unknown"))

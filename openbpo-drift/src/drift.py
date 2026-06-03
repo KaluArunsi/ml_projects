@@ -5,6 +5,7 @@ from typing import Dict
 
 import pandas as pd
 
+from src.attribution import explain_alert, suggested_check
 from src.config import DEFAULT_THRESHOLD_PCT
 
 
@@ -23,31 +24,6 @@ def _direction_is_bad(drift_pct: float, direction_bad: str, threshold_pct: float
     if direction_bad == "up":
         return drift_pct >= threshold_pct
     return drift_pct <= -threshold_pct
-
-
-def _suggested_check(rule: Dict[str, object]) -> str:
-    drivers = rule.get("drivers", [])
-    if drivers:
-        return "Review supporting KPIs: {}.".format(", ".join(str(driver) for driver in drivers))
-    return "Review recent workflow, staffing, and process changes affecting this KPI."
-
-
-def explain_alert(row: Dict[str, object]) -> str:
-    direction_word = "increased" if float(row["drift_pct"]) > 0 else "decreased"
-    return (
-        "{entity_id}'s {kpi_name} {direction_word} by {drift:.1f}% versus baseline. "
-        "Configured bad direction is '{direction_bad}'. Severity: {severity}. "
-        "{suggested_check}"
-    ).format(
-        entity_id=row["entity_id"],
-        kpi_name=row["kpi_name"],
-        direction_word=direction_word,
-        drift=abs(float(row["drift_pct"])),
-        direction_bad=row["direction_bad"],
-        severity=row["severity"],
-        suggested_check=row["suggested_check"],
-    )
-
 
 def build_signal_frame(
     df: pd.DataFrame,
@@ -82,12 +58,16 @@ def detect_rolling_drift(
     baseline_window: int = 14,
     current_window: int = 3,
 ) -> pd.DataFrame:
-    working = df.dropna(subset=["date", entity_col, "kpi_name", "kpi_value"]).copy()
+    working = (
+        df.dropna(subset=["date", entity_col, "kpi_name", "kpi_value"])
+        .sort_values([entity_col, "kpi_name", "date"])
+        .copy()
+    )
     alerts = []
     observations_needed = baseline_window + current_window
 
     for (entity_id, kpi_name), group in working.groupby([entity_col, "kpi_name"], dropna=False):
-        series = group.groupby("date")["kpi_value"].mean().sort_index()
+        series = group.groupby("date", sort=False)["kpi_value"].mean()
         if len(series) < observations_needed:
             continue
 
@@ -105,7 +85,7 @@ def detect_rolling_drift(
         if not _direction_is_bad(drift_pct, direction_bad, threshold_pct):
             continue
 
-        latest_row = group.sort_values("date").iloc[-1]
+        latest_row = group.iloc[-1]
         abs_drift = abs(drift_pct)
         severity = classify_severity(abs_drift)
         alert = {
@@ -129,7 +109,7 @@ def detect_rolling_drift(
             "latest_date": series.index[-1].strftime("%Y-%m-%d"),
             "observations_used": observations_needed,
             "unit": rule.get("unit", ""),
-            "suggested_check": _suggested_check(rule),
+            "suggested_check": suggested_check(rule),
         }
         alert["explanation"] = explain_alert(alert)
         alerts.append(alert)

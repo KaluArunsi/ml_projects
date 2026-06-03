@@ -8,11 +8,12 @@ import pandas as pd
 
 def summarize_monitoring(normalized_df: pd.DataFrame, alerts: pd.DataFrame) -> dict:
     date_range = "No data"
+    date_days = 0
     if not normalized_df.empty and normalized_df["date"].notna().any():
-        date_range = "{} to {}".format(
-            normalized_df["date"].min().strftime("%Y-%m-%d"),
-            normalized_df["date"].max().strftime("%Y-%m-%d"),
-        )
+        start = normalized_df["date"].min()
+        end = normalized_df["date"].max()
+        date_days = int((end - start).days) + 1
+        date_range = "{} to {}".format(start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d"))
 
     return {
         "entities_monitored": int(normalized_df["entity_id"].nunique(dropna=True)) if not normalized_df.empty else 0,
@@ -20,6 +21,7 @@ def summarize_monitoring(normalized_df: pd.DataFrame, alerts: pd.DataFrame) -> d
         "active_alerts": int(len(alerts)),
         "high_severity_alerts": int((alerts["severity"] == "High").sum()) if not alerts.empty else 0,
         "date_range": date_range,
+        "date_days": date_days,
     }
 
 
@@ -35,9 +37,10 @@ def alerts_for_display(alerts: pd.DataFrame) -> pd.DataFrame:
         "baseline",
         "current",
         "drift_pct",
+        "direction_bad",
         "threshold_pct",
+        "observations_used",
         "latest_date",
-        "method",
         "explanation",
     ]
     return alerts.loc[:, columns].rename(
@@ -50,9 +53,10 @@ def alerts_for_display(alerts: pd.DataFrame) -> pd.DataFrame:
             "baseline": "Baseline",
             "current": "Current",
             "drift_pct": "Drift %",
+            "direction_bad": "Direction (Bad)",
             "threshold_pct": "Threshold %",
+            "observations_used": "Observations",
             "latest_date": "Latest Date",
-            "method": "Method",
             "explanation": "Explanation",
         }
     )

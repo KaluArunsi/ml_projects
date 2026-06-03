@@ -2,6 +2,10 @@
 __pycache__/
 .pytest_cache/
 .DS_Store
+.cache/
+.npm-cache/
+.playwright-browsers/
+.playwright-cli/
 reports/*.csv
 reports/*.md
 !reports/.gitkeep
