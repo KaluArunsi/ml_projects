@@ -1,0 +1,74 @@
+aht:
+  label: Average Handle Time
+  direction_bad: up
+  unit: seconds
+  drift_threshold_pct: 15
+  validation:
+    min: 0
+    max: 7200
+  drivers:
+    - acw
+    - escalation_rate
+    - transfer_rate
+
+acw:
+  label: After Call Work
+  direction_bad: up
+  unit: seconds
+  drift_threshold_pct: 15
+  validation:
+    min: 0
+    max: 7200
+
+qa:
+  label: QA Score
+  direction_bad: down
+  unit: percentage
+  drift_threshold_pct: 5
+  validation:
+    min: 0
+    max: 100
+
+csat:
+  label: Customer Satisfaction
+  direction_bad: down
+  unit: score
+  drift_threshold_pct: 8
+  validation:
+    min: 1
+    max: 5
+
+fcr:
+  label: First Contact Resolution
+  direction_bad: down
+  unit: rate
+  drift_threshold_pct: 10
+  validation:
+    min: 0
+    max: 1
+
+escalation_rate:
+  label: Escalation Rate
+  direction_bad: up
+  unit: rate
+  drift_threshold_pct: 15
+  validation:
+    min: 0
+    max: 1
+
+transfer_rate:
+  label: Transfer Rate
+  direction_bad: up
+  unit: rate
+  drift_threshold_pct: 15
+  validation:
+    min: 0
+    max: 1
+
+late_count:
+  label: Late Count
+  direction_bad: up
+  unit: count
+  drift_threshold_pct: 20
+  validation:
+    min: 0
