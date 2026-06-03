@@ -24,8 +24,8 @@ def make_kpi_trend_chart(df, entity_id: str, kpi_name: str, baseline_window: int
             x=chart["date"],
             y=chart["baseline_mean"],
             mode="lines",
-            name="Baseline",
-            line={"dash": "dash", "color": "#94A3B8", "width": 2},
+            name="Baseline Mean ({:d}d)".format(int(baseline_window)),
+            line={"dash": "dash", "color": "#22C55E", "width": 2},
         )
     )
 
@@ -45,20 +45,26 @@ def make_kpi_trend_chart(df, entity_id: str, kpi_name: str, baseline_window: int
                 y=current["kpi_value"],
                 mode="markers",
                 marker={"size": 10, "symbol": "diamond", "color": "#1D4ED8"},
-                name="Current window",
+                name="Current Window ({:d}d)".format(int(current_window)),
             )
         )
 
     figure.update_layout(
-        title="{} - {} Trend".format(entity_id, kpi_name.upper()),
         xaxis_title="Date",
         yaxis_title=kpi_name,
-        margin={"l": 24, "r": 24, "t": 56, "b": 24},
+        margin={"l": 24, "r": 24, "t": 20, "b": 24},
         template="plotly_white",
         paper_bgcolor="#FFFFFF",
         plot_bgcolor="#FFFFFF",
         hovermode="x unified",
+        legend={
+            "orientation": "h",
+            "x": 0.5,
+            "y": 1.1,
+            "xanchor": "center",
+            "yanchor": "bottom",
+        },
     )
-    figure.update_xaxes(showgrid=False)
-    figure.update_yaxes(gridcolor="#E2E8F0", zeroline=False)
+    figure.update_xaxes(showgrid=False, linecolor="#CBD5E1", tickfont={"size": 12, "color": "#475569"})
+    figure.update_yaxes(gridcolor="#E2E8F0", zeroline=False, tickfont={"size": 12, "color": "#475569"})
     return figure

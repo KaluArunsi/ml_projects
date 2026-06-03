@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 from __future__ import annotations
 
+from html import escape
 from pathlib import Path
 
 import pandas as pd
@@ -40,6 +41,25 @@ DEFAULT_RULES_PATH = PROJECT_ROOT / "configs" / "default_kpi_rules.yaml"
 SAMPLE_DATA_PATH = PROJECT_ROOT / "data" / "sample_bpo_kpis.csv"
 SAMPLE_MAPPING_PATH = PROJECT_ROOT / "configs" / "sample_mapping.yaml"
 NONE_OPTION = "None"
+QUALITY_LABELS = {
+    "row_count": "Row count",
+    "date_parse": "Date parse check",
+    "entity_id_missing": "Missing entity IDs",
+    "kpi_value_numeric": "Numeric KPI values",
+    "missing_kpi_values": "Missing KPI values",
+    "duplicate_observations": "Duplicate observations",
+    "min_date_max_date": "Date range check",
+    "entities_count": "Unique entities",
+    "kpis_count": "Unique KPIs",
+    "kpi_range": "KPI range check",
+}
+ACCENT_STYLES = {
+    "blue": {"soft": "#EFF6FF", "line": "#2563EB", "text": "#1D4ED8"},
+    "green": {"soft": "#ECFDF5", "line": "#22C55E", "text": "#15803D"},
+    "amber": {"soft": "#FFF7ED", "line": "#F59E0B", "text": "#C2410C"},
+    "red": {"soft": "#FEF2F2", "line": "#EF4444", "text": "#B91C1C"},
+    "purple": {"soft": "#F5F3FF", "line": "#8B5CF6", "text": "#6D28D9"},
+}
 SESSION_DEFAULTS = {
     "raw_df": None,
     "normalized_df": None,
@@ -74,10 +94,21 @@ def inject_styles() -> None:
             --border: #E5E7EB;
             --page-bg: #F8FAFC;
             --card-bg: #FFFFFF;
+            --shadow-soft: 0 16px 40px rgba(15, 23, 42, 0.06);
           }
 
           [data-testid="stAppViewContainer"] {
             background: var(--page-bg);
+          }
+
+          [data-testid="stAppViewContainer"] > .main {
+            padding-top: 1.5rem;
+          }
+
+          [data-testid="stMainBlockContainer"] {
+            max-width: 1480px;
+            padding-top: 0.75rem;
+            padding-bottom: 1.75rem;
           }
 
           [data-testid="stSidebar"] {
@@ -85,18 +116,20 @@ def inject_styles() -> None:
             border-right: 1px solid var(--border);
           }
 
+          [data-testid="stSidebarContent"] {
+            padding-top: 1.25rem;
+          }
+
           [data-testid="stSidebar"] [data-testid="stFileUploader"] section {
             border: 1px dashed #93C5FD;
             border-radius: 16px;
             background: #F8FBFF;
+            min-height: 108px;
           }
 
-          [data-testid="stMetric"] {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 16px 18px;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+          [data-testid="stSidebar"] .stButton button,
+          [data-testid="stSidebar"] .stDownloadButton button {
+            height: 46px;
           }
 
           button[kind="primary"], .stDownloadButton button {
@@ -104,22 +137,26 @@ def inject_styles() -> None:
             border-radius: 12px;
             border: none;
             color: white;
+            box-shadow: 0 10px 22px rgba(37, 99, 235, 0.22);
           }
 
           .stButton button {
             border-radius: 12px;
+            border: 1px solid #D7E3FF;
           }
 
           [data-baseweb="tab-list"] {
-            gap: 8px;
+            gap: 18px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 16px;
           }
 
           [data-baseweb="tab"] {
             background: transparent;
-            border-radius: 12px 12px 0 0;
+            border-radius: 0;
             color: var(--text-muted);
             font-weight: 600;
-            padding: 12px 18px;
+            padding: 12px 12px 14px 12px;
           }
 
           [aria-selected="true"] {
@@ -130,13 +167,48 @@ def inject_styles() -> None:
           .dashboard-card {
             background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 18px 20px;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+            border-radius: 18px;
+            padding: 20px 22px;
+            box-shadow: var(--shadow-soft);
           }
 
           .dashboard-card + .dashboard-card {
             margin-top: 16px;
+          }
+
+          .dashboard-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            box-shadow: var(--shadow-soft);
+            padding: 20px 22px;
+          }
+
+          .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 2px 0 18px 0;
+            margin-bottom: 8px;
+          }
+
+          .sidebar-brand__mark {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: linear-gradient(180deg, #2563EB 0%, #1D4ED8 100%);
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 700;
+          }
+
+          .sidebar-brand__text {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-dark);
           }
 
           .eyebrow {
@@ -147,6 +219,43 @@ def inject_styles() -> None:
             text-transform: uppercase;
             letter-spacing: 0.08em;
             margin-bottom: 10px;
+          }
+
+          .metric-card {
+            position: relative;
+            overflow: hidden;
+          }
+
+          .metric-card::before {
+            content: "";
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 4px;
+            background: var(--accent-line);
+          }
+
+          .metric-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+          }
+
+          .metric-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 16px;
+            background: var(--accent-soft);
+            color: var(--accent-text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            font-weight: 700;
+            flex: 0 0 54px;
+          }
+
+          .metric-copy {
+            min-width: 0;
           }
 
           .metric-title {
@@ -170,10 +279,11 @@ def inject_styles() -> None:
 
           .header-card {
             background: linear-gradient(180deg, #EFF6FF 0%, #F8FBFF 100%);
-            border: 1px solid #BFDBFE;
+            border: 1px solid #DBEAFE;
             border-radius: 18px;
             padding: 18px 20px;
             color: var(--primary-blue);
+            box-shadow: none;
           }
 
           .section-title {
@@ -183,9 +293,34 @@ def inject_styles() -> None:
             margin-bottom: 10px;
           }
 
+          .section-subtitle {
+            color: var(--text-muted);
+            font-size: 0.92rem;
+            margin-top: -2px;
+            margin-bottom: 16px;
+          }
+
           .helper-text {
             color: var(--text-muted);
             font-size: 0.88rem;
+          }
+
+          .chip-cloud {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+          }
+
+          .chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 14px;
+            border-radius: 12px;
+            background: #F8FBFF;
+            border: 1px solid #D7E3FF;
+            color: #2563EB;
+            font-size: 0.86rem;
+            font-weight: 600;
           }
 
           .badge {
@@ -211,11 +346,42 @@ def inject_styles() -> None:
             color: var(--primary-blue);
           }
 
-          .footer-note {
+          .table-caption {
             color: var(--text-muted);
             font-size: 0.88rem;
+            margin-top: 10px;
+          }
+
+          .quality-shell table, .quality-shell thead tr th, .quality-shell tbody tr td {
+            font-size: 0.93rem !important;
+          }
+
+          .mapping-row {
+            border: 1px solid #E5E7EB;
+            border-radius: 16px;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            background: #FFFFFF;
+          }
+
+          .mapping-note {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 10px;
+          }
+
+          .export-hero {
+            border: 1px solid #BFDBFE;
+            border-radius: 20px;
+            padding: 24px 26px;
+            background: linear-gradient(180deg, #EFF6FF 0%, #F8FAFC 100%);
+          }
+
+          .footer-note {
+            color: var(--text-muted);
+            font-size: 0.94rem;
             text-align: center;
-            padding: 20px 0 8px 0;
+            padding: 18px 0 10px 0;
           }
         </style>
         """,
@@ -354,33 +520,51 @@ def refresh_alerts_state(baseline_window: int, current_window: int) -> None:
 def render_header() -> None:
     left, right = st.columns([3, 2])
     with left:
-        st.markdown("## OpenBPO Drift")
+        st.markdown("<div style='font-size:3rem;font-weight:800;line-height:1.05;color:#0F172A;'>OpenBPO Drift</div>", unsafe_allow_html=True)
         st.markdown(
-            "<div class='helper-text'>Local-first KPI drift monitoring for BPO and contact center teams.</div>",
+            "<div class='section-subtitle'>Local-first KPI drift monitoring for BPO and contact center teams.</div>",
             unsafe_allow_html=True,
         )
     with right:
         st.markdown(
             """
             <div class="header-card">
-              <div class="eyebrow">Local Processing</div>
-              <div style="font-size:1rem;font-weight:700;">All processing happens locally.</div>
-              <div style="margin-top:6px;font-size:0.92rem;">Your data never leaves your machine.</div>
+              <div style="display:flex;gap:12px;align-items:flex-start;">
+                <div style="width:28px;height:28px;border-radius:999px;background:#2563EB;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-weight:700;">i</div>
+                <div>
+                  <div style="font-size:1rem;font-weight:700;color:#1E3A8A;">All processing happens locally.</div>
+                  <div style="margin-top:6px;font-size:0.94rem;color:#475569;">Your data never leaves your machine.</div>
+                </div>
+              </div>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
 
-def render_metric_card(title: str, value: str, subtitle: str) -> None:
+def render_metric_card(title: str, value: str, subtitle: str, accent: str = "blue", icon: str = "•") -> None:
+    palette = ACCENT_STYLES[accent]
     st.markdown(
         """
-        <div class="dashboard-card">
-          <div class="eyebrow">{title}</div>
-          <div class="metric-value">{value}</div>
-          <div class="metric-subtitle">{subtitle}</div>
+        <div class="dashboard-card metric-card" style="--accent-soft:{soft};--accent-line:{line};--accent-text:{text};">
+          <div class="metric-row">
+            <div class="metric-icon">{icon}</div>
+            <div class="metric-copy">
+              <div class="metric-title">{title}</div>
+              <div class="metric-value">{value}</div>
+              <div class="metric-subtitle">{subtitle}</div>
+            </div>
+          </div>
         </div>
-        """.format(title=title, value=value, subtitle=subtitle),
+        """.format(
+            title=escape(title),
+            value=escape(value),
+            subtitle=escape(subtitle),
+            icon=escape(icon),
+            soft=palette["soft"],
+            line=palette["line"],
+            text=palette["text"],
+        ),
         unsafe_allow_html=True,
     )
 
@@ -397,6 +581,77 @@ def render_empty_state(title: str, message: str) -> None:
     )
 
 
+def render_sidebar_brand() -> None:
+    st.sidebar.markdown(
+        """
+        <div class="sidebar-brand">
+          <div class="sidebar-brand__mark">▥</div>
+          <div class="sidebar-brand__text">OpenBPO Drift</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_chip_cloud(values: list[str]) -> None:
+    chips = "".join("<span class='chip'>{}</span>".format(escape(str(value))) for value in values)
+    st.markdown("<div class='chip-cloud'>{}</div>".format(chips), unsafe_allow_html=True)
+
+
+def render_panel_header(title: str, subtitle: str | None = None) -> None:
+    st.markdown("<div class='section-title'>{}</div>".format(escape(title)), unsafe_allow_html=True)
+    if subtitle:
+        st.markdown("<div class='section-subtitle'>{}</div>".format(escape(subtitle)), unsafe_allow_html=True)
+
+
+def source_file_type(source_name: str | None) -> str:
+    if not source_name:
+        return "File"
+    return Path(source_name).suffix.replace(".", "").upper() or "File"
+
+
+def source_file_label(source_name: str | None) -> str:
+    if not source_name:
+        return "unknown"
+    suffix = Path(source_name).suffix.lower()
+    if suffix == ".csv":
+        return "text/csv"
+    if suffix in {".xlsx", ".xls"}:
+        return "excel workbook"
+    return suffix.replace(".", "") or "local file"
+
+
+def missing_cells_summary(frame: pd.DataFrame) -> tuple[str, str]:
+    missing = int(frame.isna().sum().sum())
+    total = int(frame.shape[0] * frame.shape[1]) if not frame.empty else 0
+    ratio = (missing / total * 100.0) if total else 0.0
+    return "{:.1f}%".format(ratio), "{} cells".format(missing)
+
+
+def summary_date_days(frame: pd.DataFrame) -> int:
+    if "date" not in frame.columns:
+        return 0
+    parsed_dates = pd.to_datetime(frame["date"], errors="coerce")
+    if parsed_dates.notna().sum() == 0:
+        return 0
+    return int((parsed_dates.max() - parsed_dates.min()).days) + 1
+
+
+def quality_display_frame(quality_df: pd.DataFrame) -> pd.DataFrame:
+    if quality_df.empty:
+        return quality_df
+    display = quality_df.copy()
+    display["check"] = display["check"].map(lambda value: QUALITY_LABELS.get(value, str(value).replace("_", " ").title()))
+    return display.rename(
+        columns={
+            "status": "Status",
+            "check": "Check",
+            "details": "Details",
+            "affected_rows": "Affected Rows",
+        }
+    )
+
+
 def style_quality_table(quality_df: pd.DataFrame):
     color_map = {
         "Pass": ("#DCFCE7", "#166534"),
@@ -407,9 +662,10 @@ def style_quality_table(quality_df: pd.DataFrame):
 
     def status_style(value):
         background, color = color_map.get(value, ("#FFFFFF", "#111827"))
-        return "background-color: {}; color: {}; font-weight: 700".format(background, color)
+        return "background-color: {}; color: {}; font-weight: 700; border-radius: 999px".format(background, color)
 
-    return quality_df.style.map(status_style, subset=["status"])
+    display = quality_display_frame(quality_df)
+    return display.style.map(status_style, subset=["Status"])
 
 
 def style_alert_table(alerts_df: pd.DataFrame):
@@ -471,6 +727,7 @@ def main() -> None:
     ensure_sample_data()
     default_rules = load_kpi_rules(DEFAULT_RULES_PATH)
 
+    render_sidebar_brand()
     st.sidebar.markdown("### 1. Load Data")
     uploaded_file = st.sidebar.file_uploader("Upload CSV / XLSX / XLS", type=["csv", "xlsx", "xls"])
     load_sample = st.sidebar.button("Load Sample Data", width="stretch")
@@ -504,7 +761,7 @@ def main() -> None:
     if st.sidebar.button("Reset App", width="stretch"):
         reset_app_state()
         st.rerun()
-    st.sidebar.caption("OpenBPO Drift v1.0.0")
+    st.sidebar.caption("OpenBPO Drift v1.0.0 ↗")
 
     render_header()
 
@@ -524,44 +781,49 @@ def main() -> None:
     tabs = st.tabs(["Data Preview", "Schema Mapper", "Data Quality", "Drift Alerts", "KPI Explorer", "Export"])
 
     with tabs[0]:
-        st.markdown("<div class='section-title'>Data Preview</div>", unsafe_allow_html=True)
+        render_panel_header("Data Overview")
         date_range = "Unavailable"
         if "date" in raw_df.columns:
             parsed_dates = pd.to_datetime(raw_df["date"], errors="coerce")
             if parsed_dates.notna().any():
                 date_range = "{} to {}".format(parsed_dates.min().strftime("%Y-%m-%d"), parsed_dates.max().strftime("%Y-%m-%d"))
-        preview_cards = st.columns(4)
+        missing_pct, missing_cells = missing_cells_summary(raw_df)
+        preview_cards = st.columns(5)
         with preview_cards[0]:
-            render_metric_card("Rows Loaded", "{:,}".format(len(raw_df)), "raw rows")
+            render_metric_card("Rows Loaded", "{:,}".format(len(raw_df)), "rows", accent="blue", icon="▤")
         with preview_cards[1]:
-            render_metric_card("Columns", str(len(raw_df.columns)), "detected columns")
+            render_metric_card("Columns Detected", str(len(raw_df.columns)), "columns", accent="green", icon="▥")
         with preview_cards[2]:
-            render_metric_card("Date Range", date_range, "source coverage")
+            render_metric_card("Date Range", date_range, "{} days".format(summary_date_days(raw_df)), accent="purple", icon="◫")
         with preview_cards[3]:
-            render_metric_card("Source", st.session_state.source_name or "unknown", "current file")
-        st.markdown(
-            "<div class='dashboard-card'><div class='section-title'>Detected Columns</div><div class='helper-text'>{}</div></div>".format(
-                " ".join("<code>{}</code>".format(column) for column in raw_df.columns)
-            ),
-            unsafe_allow_html=True,
-        )
-        st.dataframe(raw_df.head(20), width="stretch", hide_index=True)
+            render_metric_card("File Type", source_file_type(st.session_state.source_name), source_file_label(st.session_state.source_name), accent="amber", icon="◪")
+        with preview_cards[4]:
+            render_metric_card("Missing Values", missing_pct, missing_cells, accent="red", icon="△")
+        with st.container(border=True):
+            render_panel_header("Detected Columns")
+            render_chip_cloud(raw_df.columns.tolist())
+        with st.container(border=True):
+            render_panel_header("Data Preview (first 20 rows)")
+            st.dataframe(raw_df.head(20), width="stretch", hide_index=True)
+            st.markdown(
+                "<div class='table-caption'>Showing 1 to {} of {:,} rows</div>".format(min(len(raw_df), 20), len(raw_df)),
+                unsafe_allow_html=True,
+            )
 
     with tabs[1]:
-        st.markdown("<div class='section-title'>Schema Mapper</div>", unsafe_allow_html=True)
+        render_panel_header("Schema Mapping", "Map your raw dataset columns to the standardized schema used by OpenBPO Drift.")
         options = [NONE_OPTION] + raw_df.columns.tolist()
 
-        required_col, optional_col = st.columns(2)
+        required_col, kpi_col = st.columns([1.05, 2.35])
         with required_col:
             with st.container(border=True):
-                st.markdown("<div class='section-title'>Required Fields</div>", unsafe_allow_html=True)
+                render_panel_header("Required Fields")
                 for field in ["date", "entity_id"]:
-                    st.selectbox(FIELD_LABELS[field], options, key="field_{}".format(field))
-        with optional_col:
-            with st.container(border=True):
-                st.markdown("<div class='section-title'>Optional Metadata</div>", unsafe_allow_html=True)
+                    st.selectbox("{} column".format(FIELD_LABELS[field]), options, key="field_{}".format(field))
+                st.markdown("<div class='section-title' style='margin-top:18px;'>Optional Metadata</div>", unsafe_allow_html=True)
                 for field in ["team", "site", "account", "shift"]:
-                    st.selectbox(FIELD_LABELS[field], options, key="field_{}".format(field))
+                    st.selectbox("{} column".format(FIELD_LABELS[field]), options, key="field_{}".format(field))
+                st.caption("Optional fields help with deeper slicing and context, but are not required.")
 
         selected_fields = {field: st.session_state.get("field_{}".format(field), NONE_OPTION) for field in ["date", "entity_id", "team", "site", "account", "shift"]}
         excluded_columns = {value for value in selected_fields.values() if value != NONE_OPTION}
@@ -570,38 +832,51 @@ def main() -> None:
         if not st.session_state.get("kpi_selected_columns"):
             st.session_state["kpi_selected_columns"] = default_selected_kpis
 
-        with st.container(border=True):
-            st.markdown("<div class='section-title'>KPI Columns</div>", unsafe_allow_html=True)
-            st.multiselect("Select KPI columns", options=available_kpis, key="kpi_selected_columns")
-            default_lookup = {item["source_column"]: item for item in source_kpi_defaults}
-            for source_column in st.session_state.get("kpi_selected_columns", []):
-                defaults = default_lookup.get(
-                    source_column,
-                    {
-                        "source_column": source_column,
-                        "kpi_name": source_column.lower(),
-                        "unit": "",
-                        "direction_bad": "up",
-                        "drift_threshold_pct": default_threshold_pct,
-                        "include": True,
-                    },
-                )
-                st.session_state.setdefault("kpi_name_{}".format(source_column), defaults["kpi_name"])
-                st.session_state.setdefault("kpi_unit_{}".format(source_column), defaults.get("unit", ""))
-                st.session_state.setdefault("kpi_direction_{}".format(source_column), defaults.get("direction_bad", "up"))
-                st.session_state.setdefault("kpi_threshold_{}".format(source_column), float(defaults.get("drift_threshold_pct", default_threshold_pct)))
-                st.session_state.setdefault("kpi_include_{}".format(source_column), bool(defaults.get("include", True)))
-                with st.expander(source_column, expanded=True):
-                    st.text_input("KPI name", key="kpi_name_{}".format(source_column))
-                    st.text_input("Unit", key="kpi_unit_{}".format(source_column))
-                    st.selectbox("Bad direction", ["up", "down"], key="kpi_direction_{}".format(source_column))
-                    st.number_input("Drift threshold (%)", min_value=1.0, max_value=100.0, step=1.0, key="kpi_threshold_{}".format(source_column))
-                    st.checkbox("Include", key="kpi_include_{}".format(source_column))
+        with kpi_col:
+            with st.container(border=True):
+                render_panel_header("KPI Columns", "Select and configure the KPI columns you want to monitor for drift.")
+                st.multiselect("KPI source columns", options=available_kpis, key="kpi_selected_columns", label_visibility="collapsed")
+                default_lookup = {item["source_column"]: item for item in source_kpi_defaults}
+                header = st.columns([0.7, 1.6, 2.0, 1.0, 1.1, 1.0])
+                for label, column in zip(["Include", "Source Column", "KPI Name", "Unit", "Bad Direction", "Threshold %"], header):
+                    with column:
+                        st.caption(label)
+                for source_column in st.session_state.get("kpi_selected_columns", []):
+                    defaults = default_lookup.get(
+                        source_column,
+                        {
+                            "source_column": source_column,
+                            "kpi_name": source_column.lower(),
+                            "unit": "",
+                            "direction_bad": "up",
+                            "drift_threshold_pct": default_threshold_pct,
+                            "include": True,
+                        },
+                    )
+                    st.session_state.setdefault("kpi_name_{}".format(source_column), defaults["kpi_name"])
+                    st.session_state.setdefault("kpi_unit_{}".format(source_column), defaults.get("unit", ""))
+                    st.session_state.setdefault("kpi_direction_{}".format(source_column), defaults.get("direction_bad", "up"))
+                    st.session_state.setdefault("kpi_threshold_{}".format(source_column), float(defaults.get("drift_threshold_pct", default_threshold_pct)))
+                    st.session_state.setdefault("kpi_include_{}".format(source_column), bool(defaults.get("include", True)))
+                    row = st.columns([0.7, 1.6, 2.0, 1.0, 1.1, 1.0])
+                    with row[0]:
+                        st.checkbox("Include {}".format(source_column), key="kpi_include_{}".format(source_column), label_visibility="collapsed")
+                    with row[1]:
+                        st.text_input("Source {}".format(source_column), value=source_column, disabled=True, label_visibility="collapsed")
+                    with row[2]:
+                        st.text_input("KPI name {}".format(source_column), key="kpi_name_{}".format(source_column), label_visibility="collapsed")
+                    with row[3]:
+                        st.text_input("Unit {}".format(source_column), key="kpi_unit_{}".format(source_column), label_visibility="collapsed")
+                    with row[4]:
+                        st.selectbox("Direction {}".format(source_column), ["up", "down"], format_func=lambda value: "Higher" if value == "up" else "Lower", key="kpi_direction_{}".format(source_column), label_visibility="collapsed")
+                    with row[5]:
+                        st.number_input("Threshold {}".format(source_column), min_value=1.0, max_value=100.0, step=1.0, key="kpi_threshold_{}".format(source_column), label_visibility="collapsed")
+                st.caption("Thresholds default to Drift Settings but can be overridden per KPI.")
 
         field_mapping, kpi_mapping, mapping_yaml = build_current_mapping(raw_df, default_threshold_pct)
-        action_cols = st.columns([1, 1, 3])
+        action_cols = st.columns([1.2, 1.3, 2.8])
         with action_cols[0]:
-            normalize_clicked = st.button("Normalize Data", type="primary", width="stretch")
+            preview_clicked = st.button("Preview Normalized Data", width="stretch")
         with action_cols[1]:
             st.download_button(
                 "Export Mapping YAML",
@@ -610,7 +885,12 @@ def main() -> None:
                 mime="text/yaml",
                 width="stretch",
             )
+        with action_cols[2]:
+            normalize_clicked = st.button("Normalize Data", type="primary", width="stretch")
 
+        if preview_clicked:
+            preview_frame = normalize_to_long(st.session_state.raw_df, field_mapping, kpi_mapping, include_raw_value=True)
+            st.dataframe(preview_frame[CANONICAL_COLUMNS].head(20), width="stretch", hide_index=True)
         st.code(mapping_yaml, language="yaml")
         if normalize_clicked:
             if any(field_mapping.get(field) is None for field in REQUIRED_FIELDS):
@@ -637,7 +917,7 @@ def main() -> None:
     alerts_df = st.session_state.alerts_df if st.session_state.alerts_df is not None else pd.DataFrame()
 
     with tabs[2]:
-        st.markdown("<div class='section-title'>Data Quality</div>", unsafe_allow_html=True)
+        render_panel_header("Data Quality")
         if normalized_df is None:
             render_empty_state("Normalize Data First", "Normalize your data first to view validation results.")
         else:
@@ -645,20 +925,23 @@ def main() -> None:
             failures_count = int((quality_df["status"] == "Fail").sum()) if not quality_df.empty else 0
             cards = st.columns(4)
             with cards[0]:
-                render_metric_card("Rows Loaded", "{:,}".format(len(raw_df)), "raw rows")
+                render_metric_card("Rows Loaded", "{:,}".format(len(raw_df)), "From 1 file", accent="blue", icon="◫")
             with cards[1]:
-                render_metric_card("Normalized Observations", "{:,}".format(len(normalized_df)), "long-format rows")
+                kpi_multiplier = len(normalized_df) / max(len(raw_df), 1)
+                render_metric_card("Normalized Observations", "{:,}".format(len(normalized_df)), "{:.1f} KPI rows per source row".format(kpi_multiplier), accent="green", icon="✓")
             with cards[2]:
-                render_metric_card("Validation Warnings", str(warnings_count), "warning checks")
+                render_metric_card("Validation Warnings", str(warnings_count), "{} checks".format(warnings_count), accent="amber", icon="△")
             with cards[3]:
-                render_metric_card("Validation Failures", str(failures_count), "fail checks")
+                render_metric_card("Validation Failures", str(failures_count), "{} checks".format(failures_count), accent="red", icon="⛔")
             if mapping_is_stale:
                 st.warning("Mapping changes are pending. Click Normalize Data to refresh these results.")
-            st.dataframe(style_quality_table(quality_df), width="stretch", hide_index=True)
-            st.dataframe(normalized_df[CANONICAL_COLUMNS].head(25), width="stretch", hide_index=True)
+            with st.container(border=True):
+                render_panel_header("Data Quality Checks")
+                st.dataframe(style_quality_table(quality_df), width="stretch", hide_index=True)
+            st.markdown("<div class='footer-note'>All calculations are deterministic and run locally on your machine.</div>", unsafe_allow_html=True)
 
     with tabs[3]:
-        st.markdown("<div class='section-title'>Drift Alerts</div>", unsafe_allow_html=True)
+        render_panel_header("Drift Alerts")
         if normalized_df is None:
             render_empty_state("Normalize Data First", "Normalize your data first to view drift alerts.")
         else:
@@ -667,15 +950,15 @@ def main() -> None:
             summary = summarize_monitoring(normalized_df, alerts_df)
             cards = st.columns(5)
             with cards[0]:
-                render_metric_card("Entities Monitored", str(summary["entities_monitored"]), "agent")
+                render_metric_card("Entities Monitored", str(summary["entities_monitored"]), "agent", accent="blue", icon="◉")
             with cards[1]:
-                render_metric_card("KPIs Monitored", str(summary["kpis_monitored"]), "metrics")
+                render_metric_card("KPIs Monitored", str(summary["kpis_monitored"]), "metrics", accent="green", icon="↗")
             with cards[2]:
-                render_metric_card("Active Alerts", str(summary["active_alerts"]), "drifting now")
+                render_metric_card("Active Alerts", str(summary["active_alerts"]), "drifting now", accent="amber", icon="◔")
             with cards[3]:
-                render_metric_card("High Severity Alerts", str(summary["high_severity_alerts"]), "needs attention")
+                render_metric_card("High Severity Alerts", str(summary["high_severity_alerts"]), "needs attention", accent="red", icon="!")
             with cards[4]:
-                render_metric_card("Date Range", summary["date_range"], "{} days".format(summary["date_days"]))
+                render_metric_card("Date Range", summary["date_range"], "{} days".format(summary["date_days"]), accent="purple", icon="◫")
 
             if alerts_df.empty:
                 render_empty_state("No Active Drift Alerts", "No entities currently breach the configured drift thresholds for the selected analysis windows.")
@@ -728,7 +1011,7 @@ def main() -> None:
                     lower, right = st.columns([1.4, 1])
                     with lower:
                         with st.container(border=True):
-                            st.markdown("<div class='section-title'>KPI Trend Preview</div>", unsafe_allow_html=True)
+                            render_panel_header("KPI Trend Preview")
                             chart_controls = st.columns(2)
                             with chart_controls[0]:
                                 st.selectbox("Entity", sorted(normalized_df["entity_id"].dropna().astype(str).unique().tolist()), key="chart_entity")
@@ -789,23 +1072,21 @@ def main() -> None:
                         )
 
     with tabs[4]:
-        st.markdown("<div class='section-title'>KPI Explorer</div>", unsafe_allow_html=True)
+        render_panel_header("KPI Explorer")
         if normalized_df is None:
             render_empty_state("Normalize Data First", "Normalize your data first to explore KPI trends.")
         else:
             explorer_filters = normalized_df.copy()
-            controls = st.columns(4)
             team_options = ["All"] + sorted(explorer_filters["team"].dropna().astype(str).unique().tolist())
             account_options = ["All"] + sorted(explorer_filters["account"].dropna().astype(str).unique().tolist())
-            with controls[0]:
-                st.selectbox("Team filter", team_options, key="explorer_team")
-            with controls[1]:
-                st.selectbox("Account filter", account_options, key="explorer_account")
+            shift_options = ["All"] + sorted(explorer_filters["shift"].dropna().astype(str).unique().tolist())
 
             if st.session_state.get("explorer_team") not in {None, "All"}:
                 explorer_filters = explorer_filters[explorer_filters["team"].astype(str) == st.session_state["explorer_team"]]
             if st.session_state.get("explorer_account") not in {None, "All"}:
                 explorer_filters = explorer_filters[explorer_filters["account"].astype(str) == st.session_state["explorer_account"]]
+            if st.session_state.get("explorer_shift") not in {None, "All"}:
+                explorer_filters = explorer_filters[explorer_filters["shift"].astype(str) == st.session_state["explorer_shift"]]
 
             entity_options = sorted(explorer_filters["entity_id"].dropna().astype(str).unique().tolist())
             kpi_options = sorted(explorer_filters["kpi_name"].dropna().astype(str).unique().tolist())
@@ -816,10 +1097,16 @@ def main() -> None:
                     st.session_state["explorer_entity"] = entity_options[0]
                 if st.session_state.get("explorer_kpi") not in kpi_options:
                     st.session_state["explorer_kpi"] = kpi_options[0]
-                with controls[2]:
-                    st.selectbox("Entity", entity_options, key="explorer_entity")
-                with controls[3]:
-                    st.selectbox("KPI", kpi_options, key="explorer_kpi")
+                left_panel, chart_panel = st.columns([1.05, 2.35])
+                with left_panel:
+                    with st.container(border=True):
+                        render_panel_header("Explore KPI")
+                        st.selectbox("Entity", entity_options, key="explorer_entity")
+                        st.selectbox("KPI", kpi_options, key="explorer_kpi")
+                        st.selectbox("Team", team_options, key="explorer_team")
+                        st.selectbox("Account", account_options, key="explorer_account")
+                        st.selectbox("Shift", shift_options, key="explorer_shift")
+                        st.button("Apply Filters", width="stretch")
 
                 explorer_chart = build_signal_frame(
                     normalized_df,
@@ -835,70 +1122,100 @@ def main() -> None:
                 current_value = float(current_series.mean()) if not current_series.empty else latest_value
                 drift_pct = ((current_value - baseline_value) / baseline_value) * 100 if baseline_value else 0.0
 
-                stat_cards = st.columns(4)
-                with stat_cards[0]:
-                    render_metric_card("Latest Value", "{:.2f}".format(latest_value), "most recent")
-                with stat_cards[1]:
-                    render_metric_card("Baseline", "{:.2f}".format(baseline_value), "{} day mean".format(int(baseline_window)))
-                with stat_cards[2]:
-                    render_metric_card("Current Value", "{:.2f}".format(current_value), "{} day mean".format(int(current_window)))
-                with stat_cards[3]:
-                    render_metric_card("Drift Percent", "{:.1f}%".format(drift_pct), "current vs baseline")
+                with chart_panel:
+                    with st.container(border=True):
+                        render_panel_header(
+                            "{} for {}".format(st.session_state["explorer_kpi"].replace("_", " ").title(), st.session_state["explorer_entity"]),
+                            "Baseline window: {} days  |  Current window: {} days".format(int(baseline_window), int(current_window)),
+                        )
+                        st.plotly_chart(
+                            make_kpi_trend_chart(
+                                normalized_df,
+                                entity_id=st.session_state["explorer_entity"],
+                                kpi_name=st.session_state["explorer_kpi"],
+                                baseline_window=int(baseline_window),
+                                current_window=int(current_window),
+                            ),
+                            width="stretch",
+                        )
 
-                st.plotly_chart(
-                    make_kpi_trend_chart(
-                        normalized_df,
-                        entity_id=st.session_state["explorer_entity"],
-                        kpi_name=st.session_state["explorer_kpi"],
-                        baseline_window=int(baseline_window),
-                        current_window=int(current_window),
-                    ),
-                    width="stretch",
-                )
+                stat_cards = st.columns(5)
+                with stat_cards[0]:
+                    render_metric_card("Latest Value", "{:.2f}".format(latest_value), explorer_chart["date"].iloc[-1].strftime("%b %d, %Y"), accent="blue", icon="↗")
+                with stat_cards[1]:
+                    render_metric_card("Baseline Mean (14d)", "{:.2f}".format(baseline_value), "{} day mean".format(int(baseline_window)), accent="green", icon="╌")
+                with stat_cards[2]:
+                    render_metric_card("Current Mean (3d)", "{:.2f}".format(current_value), "{} day mean".format(int(current_window)), accent="purple", icon="◔")
+                with stat_cards[3]:
+                    render_metric_card("Drift %", "{:.1f}%".format(drift_pct), "current vs baseline", accent="red" if drift_pct < 0 else "amber", icon="↘" if drift_pct < 0 else "↗")
+                with stat_cards[4]:
+                    rule = st.session_state.kpi_rules.get(st.session_state["explorer_kpi"], {})
+                    direction_bad = str(rule.get("direction_bad", "up"))
+                    threshold_note = "Higher is bad" if direction_bad == "up" else "Lower is bad"
+                    render_metric_card("Threshold", "{:.1f}%".format(float(rule.get("drift_threshold_pct", default_threshold_pct))), threshold_note, accent="blue", icon="◌")
 
     with tabs[5]:
-        st.markdown("<div class='section-title'>Export</div>", unsafe_allow_html=True)
+        render_panel_header("Export")
         if normalized_df is None:
             render_empty_state("Normalize Data First", "Normalize your data first to unlock exports.")
         else:
             if mapping_is_stale:
                 st.warning("The current mapping has changed since the last normalization. Exported results still reflect the last normalized state.")
             markdown_report = generate_markdown_report(alerts_df, normalized_df[CANONICAL_COLUMNS], quality_df)
-            export_cards = st.columns(2)
+            export_cards = st.columns(4)
             with export_cards[0]:
-                st.markdown("<div class='dashboard-card'><div class='section-title'>Normalized KPI Data</div><div class='helper-text'>Export the canonical long-format KPI dataset used for drift detection.</div></div>", unsafe_allow_html=True)
+                st.markdown("<div class='dashboard-card'><div class='metric-icon' style='margin:0 auto 18px auto;background:#ECFDF5;color:#15803D;'>▥</div><div class='section-title' style='text-align:center;'>Normalized KPI Data</div><div class='helper-text' style='text-align:center;margin-bottom:16px;'>Export normalized KPI dataset used for drift analysis.</div></div>", unsafe_allow_html=True)
                 st.download_button(
-                    "Download Normalized KPI Data",
+                    "Download CSV",
                     data=normalized_df[CANONICAL_COLUMNS].to_csv(index=False).encode("utf-8"),
                     file_name="normalized_kpis.csv",
                     mime="text/csv",
                     width="stretch",
                 )
-                st.markdown("<div class='dashboard-card'><div class='section-title'>Mapping YAML</div><div class='helper-text'>Export the current schema and KPI mapping for reuse on similar files.</div></div>", unsafe_allow_html=True)
-                st.download_button(
-                    "Download Mapping YAML",
-                    data=mapping_yaml.encode("utf-8"),
-                    file_name="mapping.yaml",
-                    mime="text/yaml",
-                    width="stretch",
-                )
             with export_cards[1]:
-                st.markdown("<div class='dashboard-card'><div class='section-title'>Drift Alerts</div><div class='helper-text'>Export the current drift alert table with explanations and thresholds.</div></div>", unsafe_allow_html=True)
+                st.markdown("<div class='dashboard-card'><div class='metric-icon' style='margin:0 auto 18px auto;background:#FEF2F2;color:#B91C1C;'>◔</div><div class='section-title' style='text-align:center;'>Drift Alerts</div><div class='helper-text' style='text-align:center;margin-bottom:16px;'>Export all detected drift alerts with details and context.</div></div>", unsafe_allow_html=True)
                 st.download_button(
-                    "Download Drift Alerts",
+                    "Download CSV",
                     data=alerts_df.to_csv(index=False).encode("utf-8"),
                     file_name="drift_alerts.csv",
                     mime="text/csv",
                     width="stretch",
                 )
-                st.markdown("<div class='dashboard-card'><div class='section-title'>Markdown Report</div><div class='helper-text'>Generate a portable local report summarizing quality checks and top alerts.</div></div>", unsafe_allow_html=True)
+            with export_cards[2]:
+                st.markdown("<div class='dashboard-card'><div class='metric-icon' style='margin:0 auto 18px auto;background:#F5F3FF;color:#6D28D9;'>⌘</div><div class='section-title' style='text-align:center;'>Mapping YAML</div><div class='helper-text' style='text-align:center;margin-bottom:16px;'>Export schema mapping and transformation definitions.</div></div>", unsafe_allow_html=True)
                 st.download_button(
-                    "Download Markdown Report",
+                    "Download YAML",
+                    data=mapping_yaml.encode("utf-8"),
+                    file_name="mapping.yaml",
+                    mime="text/yaml",
+                    width="stretch",
+                )
+            with export_cards[3]:
+                st.markdown("<div class='dashboard-card'><div class='metric-icon' style='margin:0 auto 18px auto;background:#EFF6FF;color:#1D4ED8;'>▤</div><div class='section-title' style='text-align:center;'>Markdown Report</div><div class='helper-text' style='text-align:center;margin-bottom:16px;'>Export a summary report with key findings and charts.</div></div>", unsafe_allow_html=True)
+                st.download_button(
+                    "Download MD",
                     data=markdown_report.encode("utf-8"),
                     file_name="openbpo_drift_report.md",
                     mime="text/markdown",
                     width="stretch",
                 )
+            st.markdown(
+                """
+                <div class="export-hero" style="margin-top:18px;">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;">
+                    <div style="display:flex;gap:16px;align-items:flex-start;">
+                      <div style="width:44px;height:44px;border-radius:999px;background:#2563EB;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:700;">i</div>
+                      <div>
+                        <div style="font-size:1.7rem;font-weight:700;color:#0F172A;margin-bottom:6px;">All files are generated locally and stay on your machine.</div>
+                        <div style="font-size:1rem;color:#475569;">You can rerun the analysis anytime with updated data or settings.</div>
+                      </div>
+                    </div>
+                    <div style="font-size:3rem;color:#2563EB;line-height:1;">⌂</div>
+                  </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
     st.markdown(
         "<div class='footer-note'>OpenBPO Drift runs locally. No external services, no telemetry, and no data leaves your machine.</div>",
