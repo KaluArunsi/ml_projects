@@ -28,9 +28,11 @@ def _to_excel_source(source):
     if isinstance(source, BytesIO):
         source.seek(0)
         return source
+    if isinstance(source, bytes):
+        return BytesIO(source)
     if hasattr(source, "read"):
         return _rewind(source)
-    return BytesIO(Path(source).read_bytes())
+    raise TypeError("Unsupported source type for Excel reading: {}".format(type(source).__name__))
 
 
 def load_csv(file) -> pd.DataFrame:
@@ -43,8 +45,8 @@ def load_excel(file, sheet_name: str | int = 0) -> pd.DataFrame:
 
 
 def list_excel_sheets(file) -> Iterable[str]:
-    workbook = pd.ExcelFile(_to_excel_source(file))
-    return workbook.sheet_names
+    with pd.ExcelFile(_to_excel_source(file)) as workbook:
+        return workbook.sheet_names
 
 
 def load_tabular_file(file, sheet_name: str | int = 0, filename: str | None = None) -> pd.DataFrame:

@@ -1,20 +1,20 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-from src.attribution import explain_alert, suggested_check
-from src.charts import make_kpi_trend_chart
-from src.config import (
+from .attribution import explain_alert, suggested_check
+from .charts import make_kpi_trend_chart
+from .config import (
     DEFAULT_BASELINE_WINDOW,
     DEFAULT_CURRENT_WINDOW,
     DEFAULT_THRESHOLD_PCT,
     load_kpi_rules,
     merge_kpi_rules,
 )
-from src.drift import build_signal_frame, classify_severity, detect_rolling_drift
-from src.loaders import list_excel_sheets, load_csv, load_excel, load_tabular_file
-from src.mapper import build_default_kpi_mapping, build_mapping_yaml, normalize_to_long, slugify_column_name
-from src.report import alerts_for_display, generate_markdown_report, summarize_monitoring
-from src.sample_data import SSA_N8NN_SOURCE_URL, generate_sample_bpo_kpis
-from src.schema import CANONICAL_COLUMNS, DEFAULT_ENTITY_TYPE, FIELD_LABELS, REQUIRED_FIELDS, guess_field_mapping, infer_kpi_candidates
-from src.validation import validate_normalized_data
+from .drift import build_signal_frame, classify_severity, detect_rolling_drift
+from .loaders import list_excel_sheets, load_csv, load_excel, load_tabular_file
+from .mapper import build_default_kpi_mapping, build_mapping_yaml, normalize_to_long, slugify_column_name
+from .report import alerts_for_display, generate_markdown_report, summarize_monitoring
+from .sample_data import SSA_N8NN_SOURCE_URL, generate_sample_bpo_kpis
+from .schema import CANONICAL_COLUMNS, DEFAULT_ENTITY_TYPE, FIELD_LABELS, REQUIRED_FIELDS, guess_field_mapping, infer_kpi_candidates
+from .validation import validate_normalized_data
 
 __all__ = [
     "CANONICAL_COLUMNS",

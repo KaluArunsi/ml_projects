@@ -24,15 +24,25 @@ def merge_kpi_rules(
     default_threshold_pct: float = DEFAULT_THRESHOLD_PCT,
 ) -> Dict[str, Dict[str, object]]:
     merged: Dict[str, Dict[str, object]] = {}
-    for item in kpi_mapping:
+    for index, item in enumerate(kpi_mapping):
         if not item.get("include", True):
             continue
-        kpi_name = str(item["kpi_name"]).strip().lower()
+        kpi_raw = item.get("kpi_name")
+        if not kpi_raw or not str(kpi_raw).strip():
+            raise ValueError("Missing kpi_name in KPI mapping item {}: {!r}".format(index, item))
+        kpi_name = str(kpi_raw).strip().lower()
         rule = deepcopy(default_rules.get(kpi_name, {}))
         rule["label"] = rule.get("label", kpi_name.replace("_", " ").title())
         rule["direction_bad"] = item.get("direction_bad") or rule.get("direction_bad", "up")
         rule["unit"] = item.get("unit") or rule.get("unit", "")
-        rule["drift_threshold_pct"] = float(item.get("drift_threshold_pct") or rule.get("drift_threshold_pct", default_threshold_pct))
+        threshold = item.get("drift_threshold_pct") or rule.get("drift_threshold_pct", default_threshold_pct)
+        try:
+            threshold_pct = float(threshold)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("Invalid drift_threshold_pct for KPI {!r}: {!r}".format(kpi_name, threshold)) from exc
+        if threshold_pct <= 0 or threshold_pct > 100:
+            raise ValueError("drift_threshold_pct for KPI {!r} must be > 0 and <= 100: {!r}".format(kpi_name, threshold_pct))
+        rule["drift_threshold_pct"] = threshold_pct
         rule["drivers"] = list(rule.get("drivers", []))
         rule["validation"] = dict(rule.get("validation", {}))
         merged[kpi_name] = rule

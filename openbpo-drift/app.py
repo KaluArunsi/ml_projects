@@ -712,7 +712,7 @@ def render_empty_state(title: str, message: str) -> None:
           <div class="section-title">{title}</div>
           <div class="helper-text">{message}</div>
         </div>
-        """.format(title=title, message=message),
+        """.format(title=escape(title), message=escape(message)),
         unsafe_allow_html=True,
     )
 
@@ -1152,7 +1152,11 @@ def style_alert_table(alerts_df: pd.DataFrame):
         return "background-color: #DBEAFE; color: #1D4ED8; font-weight: 700"
 
     def drift_style(value):
-        color = "#B91C1C" if float(value) < 0 else "#1D4ED8"
+        try:
+            drift_value = float(value)
+        except (TypeError, ValueError):
+            drift_value = 0.0
+        color = "#B91C1C" if drift_value < 0 else "#1D4ED8"
         return "color: {}; font-weight: 700".format(color)
 
     return (
@@ -1562,9 +1566,9 @@ def main() -> None:
                               <div style="margin-top:14px;color:#111827;line-height:1.65;">{explanation}</div>
                             </div>
                             """.format(
-                                badge_class=badge_class,
-                                severity=selected_alert["severity"],
-                                explanation=selected_alert["explanation"],
+                                badge_class=escape(badge_class),
+                                severity=escape(str(selected_alert["severity"])),
+                                explanation=escape(str(selected_alert["explanation"])),
                             ),
                             unsafe_allow_html=True,
                         )
@@ -1614,6 +1618,9 @@ def main() -> None:
                     baseline_window=int(baseline_window),
                     current_window=int(current_window),
                 )
+                if explorer_chart.empty:
+                    render_empty_state("No KPI History", "Selected entity and KPI have no observations for the current filters.")
+                    return
                 latest_value = float(explorer_chart["kpi_value"].iloc[-1])
                 baseline_series = explorer_chart["baseline_mean"].dropna()
                 baseline_value = float(baseline_series.iloc[-1]) if not baseline_series.empty else latest_value

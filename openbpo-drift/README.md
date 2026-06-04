@@ -124,7 +124,7 @@ The app normalizes this into a canonical long format with `date`, `entity_id`, `
 
 ## Schema mapping
 
-The Streamlit UI keeps schema mapping in the app layer, but the reusable normalization logic lives in [src/mapper.py](/Users/kaluarunsi/Desktop/ml_projects/openbpo-drift/src/mapper.py:1). `app.py` only collects mapping choices and calls into `src/`.
+The Streamlit UI keeps schema mapping in the app layer, but the reusable normalization logic lives in [src/mapper.py](src/mapper.py). `app.py` only collects mapping choices and calls into `src/`.
 
 The mapping export format looks like this:
 
