@@ -1,6 +1,6 @@
 # OpenBPO Drift
 
-OpenBPO Drift is a local-first Streamlit app for detecting KPI drift in BPO and contact center operations. Upload CSV or Excel KPI data, map your columns, run explainable drift detection, view trend charts, and export alerts without sending data to external services.
+OpenBPO Drift is a local-first, open-source reference app for detecting KPI drift in BPO and contact center operations. Upload CSV or Excel KPI data, map your columns, run explainable drift detection, view trend charts, and export alerts without sending data to external services.
 
 ## What v1 includes
 
@@ -60,9 +60,11 @@ openbpo-drift/
 
 ## Quickstart
 
+From the current monorepo:
+
 ```bash
-git clone https://github.com/KaluArunsi/ml_projects/tree/main/openbpo-drift
-cd openbpo-drift
+git clone https://github.com/KaluArunsi/ml_projects.git
+cd ml_projects/openbpo-drift
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -70,6 +72,22 @@ streamlit run app.py
 ```
 
 Then open the local Streamlit URL shown in your terminal.
+
+If OpenBPO Drift is later moved into a standalone repository, clone that repository directly and run the same setup commands from its root.
+
+## Screenshots
+
+| Data preview | Schema mapper |
+| --- | --- |
+| ![Data Preview](docs/screenshots/data-preview.png) | ![Schema Mapper](docs/screenshots/schema-mapper.png) |
+
+| Data quality | Drift alerts |
+| --- | --- |
+| ![Data Quality](docs/screenshots/data-quality.png) | ![Drift Alerts](docs/screenshots/drift-alerts.png) |
+
+| KPI explorer | Export |
+| --- | --- |
+| ![KPI Explorer](docs/screenshots/kpi-explorer.png) | ![Export](docs/screenshots/export.png) |
 
 ## Try the sample workflow
 
@@ -163,7 +181,26 @@ pytest
 
 The tests cover normalization, validation, drift detection, report formatting, and deterministic sample-data generation.
 
+## Security and privacy
+
+OpenBPO Drift is designed for local analysis. It does not send uploaded files, normalized KPI rows, alert outputs, or mapping data to external services. See [SECURITY.md](SECURITY.md) for the local-processing model, current reporting process, and v1 security limitations.
+
+## Known limitations
+
+OpenBPO Drift v1 is an open-source pilot/reference app, not an enterprise BPO observability platform.
+
+- No authentication, authorization, or multi-user workspace model
+- No server-side persistence beyond files you choose to export
+- No scheduled jobs, background workers, or alert delivery
+- No built-in data warehouse, SSO, Slack, email, or ticketing connectors
+- No row-level security, audit logging, or enterprise deployment hardening
+- No LLM-based analysis or hosted telemetry
+
 ## License
+
+Copyright (C) 2026 Kalu Arunsi
+
+SPDX-License-Identifier: AGPL-3.0-or-later
 
 OpenBPO Drift is licensed under the GNU Affero General Public License v3.0 or later.
 

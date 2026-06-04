@@ -1,0 +1,12 @@
+OpenBPO Drift
+Copyright (C) 2026 Kalu Arunsi
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+
+OpenBPO Drift is licensed under the GNU Affero General Public License
+version 3.0 or later. See LICENSE for the full license text.
+
+The included demo dataset is synthetic and deterministic. It includes workload
+context inspired by the public SSA National 800 Number call-volume and
+agent-busy-rate dataset, but it does not include real BPO operational records
+or personal data.
