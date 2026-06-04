@@ -2,10 +2,6 @@
 
 OpenBPO Drift is a local-first Streamlit app for detecting KPI drift in BPO and contact center operations. Upload CSV or Excel KPI data, map your columns, run explainable drift detection, view trend charts, and export alerts without sending data to external services.
 
-## Screenshot
-
-_Screenshot placeholder: add a local app screenshot after the first polished UI pass._
-
 ## What v1 includes
 
 - CSV and Excel upload
@@ -15,7 +11,7 @@ _Screenshot placeholder: add a local app screenshot after the first polished UI 
 - Rolling baseline drift detection
 - KPI trend charts
 - CSV, YAML, and Markdown export
-- Sample BPO KPI dataset
+- Deterministic demo BPO dataset with SSA National 800 Number workload context
 
 ## What v1 does not include
 
@@ -57,6 +53,7 @@ openbpo-drift/
 └── tests/
     ├── test_drift.py
     ├── test_mapper.py
+    ├── test_sample_data.py
     ├── test_report.py
     └── test_validation.py
 ```
@@ -76,7 +73,11 @@ Then open the local Streamlit URL shown in your terminal.
 
 ## Try the sample workflow
 
-The repository includes `data/sample_bpo_kpis.csv` and a matching YAML mapping in [configs/sample_mapping.yaml](/Users/kaluarunsi/Desktop/ml_projects/openbpo-drift/configs/sample_mapping.yaml:1).
+The repository includes `data/sample_bpo_kpis.csv` and a matching YAML mapping in `configs/sample_mapping.yaml`.
+
+The demo data is synthetic operational BPO detail. It includes aggregate context columns inspired by the public SSA National 800 Number call-volume and agent-busy-rate dataset, plus deterministic incident patterns for AHT, QA, CSAT/FCR, escalation rate, occupancy, lateness, and absence. This gives demos realistic workload context without including personal data or requiring network access.
+
+SSA source page: https://www.ssa.gov/open/data/800-number-call-volume-and-agent-busy-rate.html
 
 Inside the app:
 
@@ -86,6 +87,14 @@ Inside the app:
 4. Review normalization and data quality results.
 5. Inspect drift alerts and KPI trends.
 6. Export normalized data, alerts, mapping YAML, or the Markdown report.
+
+## Regenerate sample data
+
+```bash
+python scripts/generate_sample_data.py
+```
+
+The generated file is deterministic, so tests and demos remain reproducible.
 
 ## Input format
 
@@ -107,8 +116,8 @@ Optional metadata fields:
 Sample wide input:
 
 ```csv
-date,agent_id,team,site,account,shift,aht,qa,csat
-2026-06-01,A001,Team Manila A,Manila,Telco,Night,420,91,4.6
+date,agent_id,team,site,account,shift,aht,qa,csat,occupancy
+2026-06-01,A001,Team Manila A,Manila,Telco,Night,420,91,4.6,0.83
 ```
 
 The app normalizes this into a canonical long format with `date`, `entity_id`, `kpi_name`, `kpi_value`, and the mapped metadata fields.
@@ -151,6 +160,8 @@ The export tab provides:
 ```bash
 pytest
 ```
+
+The tests cover normalization, validation, drift detection, report formatting, and deterministic sample-data generation.
 
 ## License
 

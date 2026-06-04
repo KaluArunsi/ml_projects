@@ -72,3 +72,21 @@ late_count:
   drift_threshold_pct: 20
   validation:
     min: 0
+
+occupancy:
+  label: Occupancy
+  direction_bad: up
+  unit: rate
+  drift_threshold_pct: 10
+  validation:
+    min: 0
+    max: 1
+
+absent_flag:
+  label: Absence Rate
+  direction_bad: up
+  unit: rate
+  drift_threshold_pct: 20
+  validation:
+    min: 0
+    max: 1

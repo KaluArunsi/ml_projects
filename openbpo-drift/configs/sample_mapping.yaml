@@ -55,3 +55,15 @@ kpis:
     direction_bad: up
     drift_threshold_pct: 20
     include: true
+  - source_column: occupancy
+    kpi_name: occupancy
+    unit: rate
+    direction_bad: up
+    drift_threshold_pct: 10
+    include: true
+  - source_column: absent_flag
+    kpi_name: absent_flag
+    unit: rate
+    direction_bad: up
+    drift_threshold_pct: 20
+    include: true

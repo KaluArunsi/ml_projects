@@ -6,17 +6,23 @@ import plotly.graph_objects as go
 from src.drift import build_signal_frame
 
 
-def make_kpi_trend_chart(df, entity_id: str, kpi_name: str, baseline_window: int = 14, current_window: int = 3) -> go.Figure:
+def make_kpi_trend_chart(
+    df,
+    entity_id: str,
+    kpi_name: str,
+    baseline_window: int = 14,
+    current_window: int = 3,
+    yaxis_title: str | None = None,
+) -> go.Figure:
     chart = build_signal_frame(df, entity_id, kpi_name, baseline_window=baseline_window, current_window=current_window)
     figure = go.Figure()
     figure.add_trace(
         go.Scatter(
             x=chart["date"],
             y=chart["kpi_value"],
-            mode="lines+markers",
+            mode="lines",
             name="Actual",
-            line={"color": "#2563EB", "width": 3},
-            marker={"size": 6, "color": "#2563EB"},
+            line={"color": "#244A9B", "width": 2.4},
         )
     )
     figure.add_trace(
@@ -25,7 +31,7 @@ def make_kpi_trend_chart(df, entity_id: str, kpi_name: str, baseline_window: int
             y=chart["baseline_mean"],
             mode="lines",
             name="Baseline Mean ({:d}d)".format(int(baseline_window)),
-            line={"dash": "dash", "color": "#22C55E", "width": 2},
+            line={"dash": "dash", "color": "#176B55", "width": 1.8},
         )
     )
 
@@ -34,37 +40,51 @@ def make_kpi_trend_chart(df, entity_id: str, kpi_name: str, baseline_window: int
         figure.add_vrect(
             x0=current["date"].min(),
             x1=current["date"].max(),
-            fillcolor="#DBEAFE",
-            opacity=0.35,
+            fillcolor="#F2F0FF",
+            opacity=0.75,
             line_width=0,
             layer="below",
         )
         figure.add_trace(
             go.Scatter(
-                x=current["date"],
-                y=current["kpi_value"],
+                x=[None],
+                y=[None],
                 mode="markers",
-                marker={"size": 10, "symbol": "diamond", "color": "#1D4ED8"},
+                marker={"size": 12, "symbol": "square", "color": "#C8C0F2"},
                 name="Current Window ({:d}d)".format(int(current_window)),
             )
         )
 
     figure.update_layout(
         xaxis_title="Date",
-        yaxis_title=kpi_name,
-        margin={"l": 24, "r": 24, "t": 20, "b": 24},
+        yaxis_title=yaxis_title or kpi_name,
+        margin={"l": 8, "r": 8, "t": 8, "b": 8},
         template="plotly_white",
         paper_bgcolor="#FFFFFF",
         plot_bgcolor="#FFFFFF",
         hovermode="x unified",
+        height=400,
         legend={
             "orientation": "h",
             "x": 0.5,
-            "y": 1.1,
+            "y": 1.06,
             "xanchor": "center",
             "yanchor": "bottom",
+            "font": {"size": 12, "color": "#475569"},
         },
+        hoverlabel={"bgcolor": "#FFFFFF", "bordercolor": "#CBD5E1", "font_size": 12},
     )
-    figure.update_xaxes(showgrid=False, linecolor="#CBD5E1", tickfont={"size": 12, "color": "#475569"})
-    figure.update_yaxes(gridcolor="#E2E8F0", zeroline=False, tickfont={"size": 12, "color": "#475569"})
+    figure.update_xaxes(
+        showgrid=False,
+        linecolor="#D9DEE8",
+        tickfont={"size": 12, "color": "#475569"},
+        title_font={"size": 13, "color": "#334155"},
+    )
+    figure.update_yaxes(
+        gridcolor="#E8ECF2",
+        gridwidth=1,
+        zeroline=False,
+        tickfont={"size": 12, "color": "#475569"},
+        title_font={"size": 13, "color": "#334155"},
+    )
     return figure

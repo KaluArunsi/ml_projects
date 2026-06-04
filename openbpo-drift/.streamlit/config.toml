@@ -1,9 +1,48 @@
 [theme]
 base = "light"
-primaryColor = "#2563EB"
-backgroundColor = "#F8FAFC"
+primaryColor = "#2454D6"
+backgroundColor = "#F5F6F8"
 secondaryBackgroundColor = "#FFFFFF"
 textColor = "#111827"
+linkColor = "#2454D6"
+borderColor = "#D9DEE8"
+redColor = "#C83737"
+orangeColor = "#B36B00"
+greenColor = "#17745B"
+blueColor = "#2454D6"
+violetColor = "#6857C8"
+redBackgroundColor = "#FFF1F1"
+orangeBackgroundColor = "#FFF6E8"
+greenBackgroundColor = "#ECF8F4"
+blueBackgroundColor = "#EEF4FF"
+redTextColor = "#B4232A"
+orangeTextColor = "#A15C00"
+greenTextColor = "#176B55"
+blueTextColor = "#244A9B"
+dataframeBorderColor = "#D9DEE8"
+dataframeHeaderBackgroundColor = "#F7F8FA"
+chartCategoricalColors = ["#244A9B", "#176B55", "#A15C00", "#6857C8", "#B4232A", "#4B5565"]
+chartSequentialColors = ["#F3F6FF", "#DDE7FF", "#C6D6FF", "#9EB8F7", "#7899EB", "#5478D6", "#365DB8", "#244A9B", "#18356C", "#101F3F"]
+font = "'IBM Plex Sans':https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+headingFont = "'IBM Plex Sans':https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@600;700&display=swap"
+baseFontSize = 14
+baseRadius = "8px"
+buttonRadius = "8px"
+showWidgetBorder = true
+showSidebarBorder = true
+
+[theme.sidebar]
+backgroundColor = "#F7F8FA"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#111827"
+borderColor = "#D9DEE8"
+primaryColor = "#2454D6"
 
 [server]
 maxUploadSize = 1024
+
+[client]
+toolbarMode = "minimal"
+
+[ui]
+hideTopBar = true

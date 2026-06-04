@@ -2,13 +2,18 @@ from __future__ import annotations
 
 from pathlib import Path
 import sys
+import importlib.util
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+SAMPLE_DATA_MODULE = PROJECT_ROOT / "src" / "sample_data.py"
 
-from src.sample_data import generate_sample_bpo_kpis
+spec = importlib.util.spec_from_file_location("openbpo_sample_data", SAMPLE_DATA_MODULE)
+sample_data = importlib.util.module_from_spec(spec)
+sys.modules["openbpo_sample_data"] = sample_data
+assert spec and spec.loader
+spec.loader.exec_module(sample_data)
+generate_sample_bpo_kpis = sample_data.generate_sample_bpo_kpis
 
 
 OUTPUT_PATH = PROJECT_ROOT / "data" / "sample_bpo_kpis.csv"
