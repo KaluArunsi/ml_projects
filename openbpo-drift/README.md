@@ -61,7 +61,7 @@ openbpo-drift/
 ## Quickstart
 
 ```bash
-git clone https://github.com/<owner>/openbpo-drift.git
+git clone https://github.com/KaluArunsi/ml_projects/tree/main/openbpo-drift
 cd openbpo-drift
 python -m venv .venv
 source .venv/bin/activate
