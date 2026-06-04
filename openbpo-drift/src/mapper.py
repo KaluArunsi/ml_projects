@@ -64,10 +64,7 @@ def normalize_to_long(
             "date": _column_or_none(df, field_mapping.get("date")),
             "entity_id": _column_or_none(df, field_mapping.get("entity_id")),
             "entity_type": default_entity_type,
-            "team": _column_or_none(df, field_mapping.get("team")),
-            "site": _column_or_none(df, field_mapping.get("site")),
-            "account": _column_or_none(df, field_mapping.get("account")),
-            "shift": _column_or_none(df, field_mapping.get("shift")),
+            **{field: _column_or_none(df, field_mapping.get(field)) for field in OPTIONAL_FIELDS},
         }
     )
     working = id_frame.join(df[[str(item["source_column"]) for item in included]])
@@ -81,7 +78,7 @@ def normalize_to_long(
     }
 
     normalized = working.melt(
-        id_vars=["date", "entity_id", "entity_type", "team", "site", "account", "shift"],
+        id_vars=["date", "entity_id", "entity_type", *OPTIONAL_FIELDS],
         value_vars=source_columns,
         var_name="source_column",
         value_name="kpi_value",

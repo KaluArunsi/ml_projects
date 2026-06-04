@@ -109,10 +109,16 @@ def inject_styles() -> None:
             --violet-soft: #F2F0FF;
           }
 
-          [data-testid="stHeader"],
-          [data-testid="stToolbar"],
           [data-testid="stDecoration"] {
             display: none !important;
+          }
+
+          [data-testid="stHeader"] {
+            background: transparent;
+          }
+
+          [data-testid="stToolbar"] {
+            background: transparent;
           }
 
           [data-testid="stAppViewContainer"] {
@@ -586,7 +592,7 @@ def remove_kpi_editor_row(index: int) -> None:
 
 def build_current_mapping(raw_df: pd.DataFrame, default_threshold_pct: float) -> tuple[dict, list[dict], str]:
     field_mapping = {}
-    for field in ["date", "entity_id", "team", "site", "account", "shift"]:
+    for field in ["date", "entity_id", "team", "site", "account", "shift", "channel", "program"]:
         selected = st.session_state.get("field_{}".format(field), NONE_OPTION)
         field_mapping[field] = None if selected == NONE_OPTION else selected
 
@@ -1303,7 +1309,10 @@ def main() -> None:
                     st.selectbox("Program column", options, key="field_program")
                     st.caption("Optional fields help with deeper slicing and context, but are not required.")
 
-            selected_fields = {field: st.session_state.get("field_{}".format(field), NONE_OPTION) for field in ["date", "entity_id", "team", "site", "account", "shift"]}
+            selected_fields = {
+                field: st.session_state.get("field_{}".format(field), NONE_OPTION)
+                for field in ["date", "entity_id", "team", "site", "account", "shift", "channel", "program"]
+            }
             excluded_columns = {value for value in selected_fields.values() if value != NONE_OPTION}
             available_kpis = [column for column in raw_df.columns if column not in excluded_columns]
             default_selected_kpis = [item["source_column"] for item in source_kpi_defaults if item["source_column"] in available_kpis]

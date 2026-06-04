@@ -9,12 +9,23 @@ def test_normalize_to_long_creates_expected_canonical_rows():
         "Date": ["2026-06-01", "2026-06-02"],
         "Agent ID": ["A001", "A002"],
         "Team": ["Team A", "Team B"],
+        "Channel": ["Voice", "Chat"],
+        "Program": ["Retention", "Claims"],
         "AHT": [420, 440],
         "QA Score": [91, 88],
     }
     frame = normalize_to_long(
         pd.DataFrame(raw),
-        field_mapping={"date": "Date", "entity_id": "Agent ID", "team": "Team", "site": None, "account": None, "shift": None},
+        field_mapping={
+            "date": "Date",
+            "entity_id": "Agent ID",
+            "team": "Team",
+            "site": None,
+            "account": None,
+            "shift": None,
+            "channel": "Channel",
+            "program": "Program",
+        },
         kpi_mapping=[
             {"source_column": "AHT", "kpi_name": "aht", "unit": "seconds", "direction_bad": "up", "drift_threshold_pct": 15, "include": True},
             {"source_column": "QA Score", "kpi_name": "qa", "unit": "percentage", "direction_bad": "down", "drift_threshold_pct": 5, "include": True},
@@ -24,4 +35,6 @@ def test_normalize_to_long_creates_expected_canonical_rows():
     assert len(frame) == 4
     assert list(frame.columns) == CANONICAL_COLUMNS
     assert frame["date"].notna().all()
+    assert frame.loc[frame["entity_id"] == "A001", "channel"].eq("Voice").all()
+    assert frame.loc[frame["entity_id"] == "A002", "program"].eq("Claims").all()
     assert frame["kpi_value"].dtype.kind in {"i", "f"}

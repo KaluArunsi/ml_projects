@@ -12,6 +12,8 @@ CANONICAL_COLUMNS = [
     "site",
     "account",
     "shift",
+    "channel",
+    "program",
     "kpi_name",
     "kpi_value",
     "unit",
@@ -19,7 +21,7 @@ CANONICAL_COLUMNS = [
 ]
 
 REQUIRED_FIELDS = ["date", "entity_id"]
-OPTIONAL_FIELDS = ["team", "site", "account", "shift"]
+OPTIONAL_FIELDS = ["team", "site", "account", "shift", "channel", "program"]
 DEFAULT_ENTITY_TYPE = "agent"
 
 FIELD_LABELS = {
@@ -29,6 +31,8 @@ FIELD_LABELS = {
     "site": "Site",
     "account": "Account",
     "shift": "Shift",
+    "channel": "Channel",
+    "program": "Program",
 }
 
 FIELD_ALIASES = {
@@ -38,6 +42,8 @@ FIELD_ALIASES = {
     "site": ("site", "location", "center"),
     "account": ("account", "client", "program", "campaign"),
     "shift": ("shift", "schedule"),
+    "channel": ("channel", "contact_channel", "queue_channel"),
+    "program": ("program", "lob", "line_of_business"),
 }
 
 
