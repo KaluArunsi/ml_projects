@@ -1199,6 +1199,18 @@ def alert_label(row: pd.Series) -> str:
     return "{severity} | {entity_id} | {kpi_name} | {drift_pct:.1f}%".format(**row.to_dict())
 
 
+def alert_for_entity_kpi(alerts_df: pd.DataFrame, entity_id: str, kpi_name: str) -> pd.Series | None:
+    if alerts_df.empty:
+        return None
+    matches = alerts_df[
+        (alerts_df["entity_id"].astype(str) == str(entity_id))
+        & (alerts_df["kpi_name"].astype(str) == str(kpi_name))
+    ]
+    if matches.empty:
+        return None
+    return matches.iloc[0]
+
+
 def main() -> None:
     st.set_page_config(page_title="OpenBPO Drift", page_icon=":material/monitoring:", layout="wide", initial_sidebar_state="expanded")
     inject_styles()
@@ -1555,24 +1567,53 @@ def main() -> None:
                                 config={"displayModeBar": False},
                             )
                     with right:
-                        badge_class = "badge-high" if selected_alert["severity"] == "High" else "badge-medium" if selected_alert["severity"] == "Medium" else "badge-watch"
-                        st.markdown(
-                            """
-                            <div class="dashboard-card">
-                              <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
-                                <div class="section-title" style="margin-bottom:0;">Alert explanation</div>
-                                <span class="badge {badge_class}">{severity}</span>
-                              </div>
-                              <div style="margin-top:14px;color:#111827;line-height:1.65;">{explanation}</div>
-                            </div>
-                            """.format(
-                                badge_class=escape(badge_class),
-                                severity=escape(str(selected_alert["severity"])),
-                                explanation=escape(str(selected_alert["explanation"])),
-                            ),
-                            unsafe_allow_html=True,
+                        selected_chart_alert = alert_for_entity_kpi(
+                            alerts_df,
+                            st.session_state["chart_entity"],
+                            st.session_state["chart_kpi"],
                         )
-                        render_alert_detail_stats(selected_alert, int(baseline_window), int(current_window))
+                        if selected_chart_alert is not None:
+                            st.session_state.selected_alert = alert_label(selected_chart_alert)
+                            badge_class = (
+                                "badge-high"
+                                if selected_chart_alert["severity"] == "High"
+                                else "badge-medium"
+                                if selected_chart_alert["severity"] == "Medium"
+                                else "badge-watch"
+                            )
+                            st.markdown(
+                                """
+                                <div class="dashboard-card">
+                                  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+                                    <div class="section-title" style="margin-bottom:0;">Alert explanation</div>
+                                    <span class="badge {badge_class}">{severity}</span>
+                                  </div>
+                                  <div style="margin-top:14px;color:#111827;line-height:1.65;">{explanation}</div>
+                                </div>
+                                """.format(
+                                    badge_class=escape(badge_class),
+                                    severity=escape(str(selected_chart_alert["severity"])),
+                                    explanation=escape(str(selected_chart_alert["explanation"])),
+                                ),
+                                unsafe_allow_html=True,
+                            )
+                            render_alert_detail_stats(selected_chart_alert, int(baseline_window), int(current_window))
+                        else:
+                            st.markdown(
+                                """
+                                <div class="dashboard-card">
+                                  <div class="section-title" style="margin-bottom:0;">Alert explanation</div>
+                                  <div style="margin-top:14px;color:#475569;line-height:1.65;">
+                                    No active drift alert matches <strong>{entity_id}</strong> and <strong>{kpi_name}</strong> under the current analysis windows.
+                                    The trend chart still shows the KPI history so you can inspect non-alerting pairs.
+                                  </div>
+                                </div>
+                                """.format(
+                                    entity_id=escape(str(st.session_state["chart_entity"])),
+                                    kpi_name=escape(str(st.session_state["chart_kpi"])),
+                                ),
+                                unsafe_allow_html=True,
+                            )
 
     with tabs[4]:
         render_panel_header("KPI explorer")
