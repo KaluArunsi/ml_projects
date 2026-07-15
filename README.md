@@ -1,28 +1,46 @@
 # ml_projects
 
-a collection of machine learning and ai projects i build and ship. each project tackles a different problem space, from structured data to nlp to full-stack apps.
+Machine learning and AI projects across structured risk modeling, forecasting, NLP, and local-first Streamlit apps. Each project is self-contained with its own dependencies and documentation.
 
-## projects
+## Project Index
 
-**[oil spill cause classification](oil-spill-cause-classification/)**
-multi-label nlp system that classifies the cause of oil spills from incident descriptions and social media posts. three modeling tracks: tf-idf baseline, distilbert fine-tuning with focal loss, and a qwen2.5 model fine-tuned via mlx lora on apple silicon. includes a streamlit app for training, prediction, and reporting.
+| Project | Problem | Interface | Tests | Status |
+| --- | --- | --- | --- | --- |
+| [OpenBPO Drift](openbpo-drift/) | Local-first KPI drift monitoring for BPO/contact-center operations | Streamlit app | Yes | Deployed v1 |
+| [Oil Spill Cause Classification](oil-spill-cause-classification/) | Multi-label NLP classification of oil spill causes | CLI + Streamlit app | Not yet | Active build |
+| [Credit Worthiness Assessment](credit-worthiness/) | Probabilistic loan default risk assessment | CLI + notebook | Not yet | Portfolio project |
+| [Hotel Cancellation Risk](hotel-cancellation-determination/) | Cancellation prediction and severity tiering | CLI + notebook | Not yet | Portfolio project |
+| [Bike Demand Forecasting](bike-demand-prediction/) | Hourly bike demand prediction | CLI + notebook | Not yet | Early project |
 
-**[credit worthiness assessment](credit-worthiness/)**
-probabilistic loan default classifier built on lendingclub application data. estimates the likelihood a borrower defaults and surfaces the key features driving that prediction. every output is a complementary probability pair.
+## Highlights
 
-**[hotel cancellation risk](hotel-cancellation-determination/)**
-two-model system that predicts booking cancellations and assigns severity tiers. built so a revenue team can look at a dashboard and know which bookings need attention first, without digging through spreadsheets.
+**[OpenBPO Drift](openbpo-drift/)**
+Local-first, open-source reference app for detecting KPI drift in BPO operations. Includes upload, schema mapping, validation, rolling drift detection, charts, exports, tests, screenshots, and a documented security posture.
 
-**[bike demand forecasting](bike-demand-prediction/)**
-hourly bike demand prediction for seoul's public bike sharing system. practical time-series modeling with weather, seasonal, and calendar features.
+**[Oil Spill Cause Classification](oil-spill-cause-classification/)**
+Multi-label NLP system that classifies oil spill causes from incident descriptions and social media posts. Includes TF-IDF, DistilBERT, and MLX LoRA model tracks, plus a Streamlit UI and CLI.
 
-**[openbpo drift](openbpo-drift/)**
-a monitoring and observability tool for tracking drift in outsourced business process operations. built with streamlit.
+**[Credit Worthiness Assessment](credit-worthiness/)**
+Probabilistic LendingClub loan default classifier with complementary repayment/default probabilities, OCC-inspired risk tiers, model comparison, and visual model outputs.
 
-## structure
+**[Hotel Cancellation Risk](hotel-cancellation-determination/)**
+Two-model cancellation risk system with severity tiers so revenue teams can prioritize bookings without spreadsheet triage.
 
-every project folder is self-contained with its own dependencies, data pipeline, and documentation. most projects include a streamlit interface or jupyter notebook for exploration, plus a cli entry point for scripting and automation.
+**[Bike Demand Forecasting](bike-demand-prediction/)**
+Hourly Seoul bike demand prediction using weather, seasonal, and calendar features.
 
-## tech
+## Repository Standards
 
-python across the board. the stack varies by project but pulls from: scikit-learn, pytorch, transformers, mlx (apple silicon), streamlit, plotly, pandas, numpy, and the usual data science toolchain.
+New or refreshed projects should aim for:
+
+- `README.md` with problem framing, setup, usage, outputs, and limitations
+- `src/` for reusable code and `main.py` or documented app entry point
+- `requirements.txt` or project-specific dependency file
+- `tests/` for productionized projects
+- `data/README.md` when datasets are included or expected externally
+- `model_output_showcase/` only for curated presentation artifacts
+- generated `output/`, local virtual environments, caches, and checkpoints excluded from git
+
+## Tech
+
+Python across the board. The stack varies by project but includes scikit-learn, PyTorch, Transformers, MLX on Apple Silicon, Streamlit, Plotly, pandas, NumPy, and the standard data science toolchain.
